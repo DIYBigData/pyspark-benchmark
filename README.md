@@ -14,11 +14,11 @@ spark-submit --master spark://spark-master:7077 --name 'generate-benchmark-test-
 Where
 * `--master spark://spark-master:7077` - The `spark-submit` option identifying where your Spark master is.
 * `--name 'generate-benchmark-test-data'` - The `spark-submit`	option for naming the submitted job. this is optional.
-* `/path/to/test/data/file` - The complete file path to where the test data should be generated to. This can be a HDFS fiel URL. The exact value depends on your Spark cluster set up.
+* `/path/to/test/data/file` - The complete file path to where the test data should be generated to. This can be a HDFS file URL. The exact value depends on your Spark cluster set up.
 * `-r num_rows` - The total number of rows to generate. Each row is about 75 bytes.
 * `-p num_partitions` - The number of partitions the test data file should have. 
 
-The scema of the data produced looks like:
+The schema of the data produced looks like:
 ```
 root
  |-- value: string (nullable = true)
@@ -47,14 +47,14 @@ The Shuffle Benchmark stresses common PySpark operations on data frames that wou
 
 Each operation is timed independently. 
 
-To run the Shuffle Benchmark, use this command:
+To run the shuffle benchmark, use this command:
 ```
 spark-submit --master spark://spark-master:7077 \
 	benchmark-shuffle.py /path/to/test/data/file -r num_partitions -n 'benchmark-job-name'
 ```
 Where:
 * `--master spark://spark-master:7077` - The `spark-submit` option identifying where your Spark master is. 
-* `/path/to/test/data/file` - The complete file path to where the test data to be used was generated to. This can be a HDFS fiel URL. The exact value depends on your Spark cluster set up and what filepath you used when generating the test data.
+* `/path/to/test/data/file` - The complete file path to where the test data to be used was generated to. This can be a HDFS file URL. The exact value depends on your Spark cluster set up and what filepath you used when generating the test data.
 * `-r num_partitions` - This sets the number of partitions that the the test data should be repartitioned to during the Repartition benchmark test. 
 * `-n 'benchmark-job-name'` - The name to use for this job. In this case, it is not a `spark-submit` option because the benchmarking job uses it too.
 
@@ -72,5 +72,38 @@ The results of the benchmarking will be printed to the job's `INFO` logger, and 
 20/01/11 22:49:55 INFO __main__: 
 20/01/11 22:49:55 INFO __main__: **********************************************************************
 ```
+
+### CPU Benchmark
+The CPU Benchmark stresses PySpark operations that should be primarily CPU bound. This is not to say that there would be any disk or network I/O, just that the CPU speed and task efficiency should be the primary factors in the benchmark's performance. The test operations for this benchmark include:
+
+* SHA-512 hashing of a string
+* Estimating Pi using random samples
+
+Each operation is timed independently.
+
+To run the CPU benchmark, use this command:
+
+```
+spark-submit --master spark://spark-master:7077 \
+	benchmark-cpu.py /path/to/test/data/file -s pi_samples -p pi_tasks -n 'benchmark-job-name'
+```
+Where:
+* `--master spark://spark-master:7077` - The `spark-submit` option identifying where your Spark master is. 
+* `/path/to/test/data/file` - The complete file path to where the test data to be used was generated to. This can be a HDFS file URL. The exact value depends on your Spark cluster set up and what filepath you used when generating the test data.
+* `-s pi_samples` - The number of random samples that will be taken to calculate Pi. Defaults to 5 billion.
+* `-p pi_tasks` - The number of parallel tasks that will be used to take random samples to calculate pi. The parallelism. 
+
+The results of the benchmarking will be printed to the job's `INFO` logger, and will appear near the end of the log stream. It will look something like this:
+```
+20/01/12 05:15:42 INFO __main__: ****************************************************************************
+20/01/12 05:15:42 INFO __main__:     RESULTS    RESULTS    RESULTS    RESULTS    RESULTS    RESULTS
+20/01/12 05:15:42 INFO __main__:     Test Run = run-cpu-benchmark
+20/01/12 05:15:42 INFO __main__: 
+20/01/12 05:15:42 INFO __main__: SHA-512 benchmark time  = 28.739750354085118 seconds for 50,000,000 hashes
+20/01/12 05:15:42 INFO __main__: Calculate Pi benchmark  = 181.7118715350516 seconds with pi = 3.1414572128, samples = 5,000,000,000
+20/01/12 05:15:42 INFO __main__: 
+20/01/12 05:15:42 INFO __main__: ****************************************************************************
+```
+
 # Further Development
 Other benchmark tests will be added. Pull requests are welcome.

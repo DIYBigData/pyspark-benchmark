@@ -59,7 +59,7 @@ def parseArguments():
             '-n', '--job-name',
             metavar='name',
             type=str,
-            default='shuffle-benchmark',
+            default='cpu-benchmark',
             dest='appName',
             help='The name given this PySpark job'
         )
@@ -90,7 +90,39 @@ def benchmarkCalculatePi(spark, samples, parallelism, jobLogger):
     pi_val = 4.0*count/samples
     end_time = timer()
     return (end_time-start_time), pi_val
+
+def benchmarkCalculatePiUsingDF(spark, samples, parallelism, jobLogger):
+    def inside(p):
+        x, y = random.random(), random.random()
+        return x*x + y*y < 1
+    jobLogger.info('****************************************************************')
+    jobLogger.info('Starting benchmark test calculatng Pi via dataframe manipulations '
+                   'with {0:,} samples'.format(samples))
+
+    start_time = timer()
     
+    # Note that the random seed for each of the columns must be different otherwise
+    # each column will have identical values on each row
+    pi_df = (
+        spark.range(0, samples, numPartitions=parallelism)
+        .withColumn('x', F.rand(seed=8675309))
+        .withColumn('y', F.rand(seed=17760704))
+        .withColumn('within_circle', F.when(
+                (F.pow(F.col('x'),F.lit(2)) + F.pow(F.col('y'),F.lit(2)) <= 1.0),
+                F.lit(1).cast(T.LongType())
+            ).otherwise(
+                F.lit(0).cast(T.LongType())
+            )
+        )
+        .agg(
+            F.sum('within_circle').alias('count_within_circle'),
+            F.count('*').alias('count_samples')
+        )
+    )
+    res = pi_df.collect()
+    pi_val = 4.0*(res[0].count_within_circle)/(res[0].count_samples)
+    end_time = timer()
+    return (end_time-start_time), pi_val
 
 def main():
     args = parseArguments()
@@ -109,8 +141,17 @@ def main():
     
     callSite_short_orig = spark.sparkContext.getLocalProperty('callSite.short')
     callSite_long_orig = spark.sparkContext.getLocalProperty('callSite.long')
-   
-    df = spark.read.csv(args.inputfile, header=True)
+
+    data_schema = T.StructType([
+        T.StructField("value", T.StringType()),
+        T.StructField("prefix2", T.StringType()),
+        T.StructField("prefix4", T.StringType()),
+        T.StructField("prefix8", T.StringType()),
+        T.StructField("float_val", T.DoubleType()),
+        T.StructField("integer_val", T.LongType())
+    ])
+
+    df = spark.read.csv(args.inputfile, header=True, schema=data_schema)
 
     spark.sparkContext.setLocalProperty('callSite.short', 'SHA-256-benchmark')
     spark.sparkContext.setLocalProperty(
@@ -123,6 +164,12 @@ def main():
     calcPi_time, pi_val = benchmarkCalculatePi(
         spark, args.piSamples, args.piParallelism, joblogger)
 
+    spark.sparkContext.setLocalProperty('callSite.short', 'calculate-pi-with-dataframe-benchmark')
+    spark.sparkContext.setLocalProperty(
+        'callSite.long', 'Benchmark CPU calculating Pi using only dataframe manipulations.')
+    calcPi_DF_time, pi_DF_val = benchmarkCalculatePiUsingDF(
+        spark, args.piSamples, args.piParallelism, joblogger)
+
     #restore properties
     spark.sparkContext.setLocalProperty('callSite.short', callSite_short_orig)
     spark.sparkContext.setLocalProperty('callSite.long', callSite_long_orig)
@@ -131,10 +178,12 @@ def main():
     joblogger.info('    RESULTS    RESULTS    RESULTS    RESULTS    RESULTS    RESULTS')
     joblogger.info('    Test Run = {0}'.format(args.appName))
     joblogger.info('')
-    joblogger.info('SHA-512 benchmark time  = {0} seconds for {1:,} hashes'.format(
+    joblogger.info('SHA-512 benchmark time                 = {0} seconds for {1:,} hashes'.format(
                         sha256_time, sha256_hashes))
-    joblogger.info('Calculate Pi benchmark  = {0} seconds with pi = {1}, samples = {2:,}'.format(
+    joblogger.info('Calculate Pi benchmark                 = {0} seconds with pi = {1}, samples = {2:,}'.format(
                         calcPi_time, pi_val, args.piSamples))
+    joblogger.info('Calculate Pi benchmark using dataframe = {0} seconds with pi = {1}, samples = {2:,}'.format(
+                        calcPi_DF_time, pi_DF_val, args.piSamples))
     joblogger.info('')
     joblogger.info('****************************************************************************')
 

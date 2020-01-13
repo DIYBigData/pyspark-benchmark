@@ -172,8 +172,17 @@ def main():
     
     callSite_short_orig = spark.sparkContext.getLocalProperty('callSite.short')
     callSite_long_orig = spark.sparkContext.getLocalProperty('callSite.long')
-   
-    df = spark.read.csv(args.inputfile, header=True)
+
+    data_schema = T.StructType([
+        T.StructField("value", T.StringType()),
+        T.StructField("prefix2", T.StringType()),
+        T.StructField("prefix4", T.StringType()),
+        T.StructField("prefix8", T.StringType()),
+        T.StructField("float_val", T.DoubleType()),
+        T.StructField("integer_val", T.LongType())
+    ])
+
+    df = spark.read.csv(args.inputfile, header=True, schema=data_schema)
 
     spark.sparkContext.setLocalProperty('callSite.short', 'groupBy-benchmark')
     spark.sparkContext.setLocalProperty(

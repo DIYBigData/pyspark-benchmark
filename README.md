@@ -77,7 +77,8 @@ The results of the benchmarking will be printed to the job's `INFO` logger, and 
 The CPU Benchmark stresses PySpark operations that should be primarily CPU bound. This is not to say that there would be any disk or network I/O, just that the CPU speed and task efficiency should be the primary factors in the benchmark's performance. The test operations for this benchmark include:
 
 * SHA-512 hashing of a string
-* Estimating Pi using random samples
+* Estimating Pi with random samples and an user defined Python function
+* Estimating Pi with random samples and native Spark functions only
 
 Each operation is timed independently.
 
@@ -91,7 +92,7 @@ Where:
 * `--master spark://spark-master:7077` - The `spark-submit` option identifying where your Spark master is. 
 * `/path/to/test/data/file` - The complete file path to where the test data to be used was generated to. This can be a HDFS file URL. The exact value depends on your Spark cluster set up and what filepath you used when generating the test data.
 * `-s pi_samples` - The number of random samples that will be taken to calculate Pi. Defaults to 5 billion.
-* `-p pi_tasks` - The number of parallel tasks that will be used to take random samples to calculate pi. The parallelism. 
+* `-p pi_tasks` - The number of parallel tasks that will be used to take random samples to calculate pi.
 
 The results of the benchmarking will be printed to the job's `INFO` logger, and will appear near the end of the log stream. It will look something like this:
 ```

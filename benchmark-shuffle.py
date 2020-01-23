@@ -54,6 +54,14 @@ def parseArguments():
             dest='repartitions',
             help='The number of partitions to use in repartition benchmark'
         )
+    arguments.add_argument(
+            '-o', '--results-output',
+            metavar='results-file-path',
+            type=str,
+            default=None,
+            dest='results_output_file',
+            help='The file path to place the results output'
+        )
     return arguments.parse_args()
 
 def benchmarkGroupBy(df, jobLogger):
@@ -220,6 +228,28 @@ def main():
                         broadcastInnerJoin_time))
     joblogger.info('')
     joblogger.info('**********************************************************************')
+
+    if args.results_output_file is not None:
+        joblogger.info('')
+        joblogger.info('Writing results to {0}'.format(args.results_output_file))
+
+        results_list = [
+            ('group-by',groupBy_time),
+            ('repartition',repartition_time),
+            ('inner-join',innerJoin_time),
+            ('broadcast-inner-join',broadcastInnerJoin_time),
+        ]
+    
+        results_schema = T.StructType([
+            T.StructField("test", T.StringType()),
+            T.StructField("seconds", T.DoubleType())
+        ])
+        results_df = spark.createDataFrame(results_list, schema=results_schema).coalesce(1)
+        results_df.write.csv(
+            args.results_output_file,
+            header=True,
+            mode='overwrite'
+        )
 
 if __name__ == '__main__':
     main()

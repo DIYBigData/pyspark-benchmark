@@ -57,6 +57,7 @@ Where:
 * `/path/to/test/data/file` - The complete file path to where the test data to be used was generated to. This can be a HDFS file URL. The exact value depends on your Spark cluster set up and what filepath you used when generating the test data.
 * `-r num_partitions` - This sets the number of partitions that the the test data should be repartitioned to during the Repartition benchmark test. 
 * `-n 'benchmark-job-name'` - The name to use for this job. In this case, it is not a `spark-submit` option because the benchmarking job uses it too.
+* `-o /results/file/path` - qualified file path to where the test timing results should be emitted. This optional, and if not present no results file will be written.
 
 The results of the benchmarking will be printed to the job's `INFO` logger, and will appear near the end of the log stream. It will look something like this:
 ```
@@ -93,17 +94,19 @@ Where:
 * `/path/to/test/data/file` - The complete file path to where the test data to be used was generated to. This can be a HDFS file URL. The exact value depends on your Spark cluster set up and what filepath you used when generating the test data.
 * `-s pi_samples` - The number of random samples that will be taken to calculate Pi. Defaults to 5 billion.
 * `-p pi_tasks` - The number of parallel tasks that will be used to take random samples to calculate pi.
+* `-o /results/file/path` - qualified file path to where the test timing results should be emitted. This optional, and if not present no results file will be written.
 
 The results of the benchmarking will be printed to the job's `INFO` logger, and will appear near the end of the log stream. It will look something like this:
 ```
-20/01/12 05:15:42 INFO __main__: ****************************************************************************
-20/01/12 05:15:42 INFO __main__:     RESULTS    RESULTS    RESULTS    RESULTS    RESULTS    RESULTS
-20/01/12 05:15:42 INFO __main__:     Test Run = run-cpu-benchmark
-20/01/12 05:15:42 INFO __main__: 
-20/01/12 05:15:42 INFO __main__: SHA-512 benchmark time  = 28.739750354085118 seconds for 50,000,000 hashes
-20/01/12 05:15:42 INFO __main__: Calculate Pi benchmark  = 181.7118715350516 seconds with pi = 3.1414572128, samples = 5,000,000,000
-20/01/12 05:15:42 INFO __main__: 
-20/01/12 05:15:42 INFO __main__: ****************************************************************************
+20/01/25 04:33:58 INFO __main__: ****************************************************************************
+20/01/25 04:33:58 INFO __main__:     RESULTS    RESULTS    RESULTS    RESULTS    RESULTS    RESULTS
+20/01/25 04:33:58 INFO __main__:     Test Run = pyspark-benchmark-cpu
+20/01/25 04:33:58 INFO __main__: 
+20/01/25 04:33:58 INFO __main__: SHA-512 benchmark time                 = 1021.0458517669999 seconds for 2,000,000,000 hashes
+20/01/25 04:33:58 INFO __main__: Calculate Pi benchmark                 = 636.8594892990002 seconds with pi = 3.14151414112, samples = 25,000,000,000
+20/01/25 04:33:58 INFO __main__: Calculate Pi benchmark using dataframe = 9.309087140999964 seconds with pi = 3.14159186944, samples = 25,000,000,000
+20/01/25 04:33:58 INFO __main__: 
+20/01/25 04:33:58 INFO __main__: ****************************************************************************
 ```
 
 # Further Development

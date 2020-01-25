@@ -63,6 +63,14 @@ def parseArguments():
             dest='appName',
             help='The name given this PySpark job'
         )
+    arguments.add_argument(
+            '-o', '--results-output',
+            metavar='results-file-path',
+            type=str,
+            default=None,
+            dest='results_output_file',
+            help='The file path to place the results output'
+        )
     return arguments.parse_args()
 
 def benchmarkSHA256(df, jobLogger):
@@ -186,6 +194,27 @@ def main():
                         calcPi_DF_time, pi_DF_val, args.piSamples))
     joblogger.info('')
     joblogger.info('****************************************************************************')
+
+    if args.results_output_file is not None:
+        joblogger.info('')
+        joblogger.info('Writing results to {0}'.format(args.results_output_file))
+    
+        results_list = [
+            ('sha-512',sha256_time),
+            ('calc-pi-python-udf',calcPi_time),
+            ('calc-pi-dataframe',calcPi_DF_time),
+        ]
+    
+        results_schema = T.StructType([
+            T.StructField("test", T.StringType()),
+            T.StructField("seconds", T.DoubleType())
+        ])
+        results_df = spark.createDataFrame(results_list, schema=results_schema).coalesce(1)
+        results_df.write.csv(
+            args.results_output_file,
+            header=True,
+            mode='overwrite'
+        )
 
 
 if __name__ == '__main__':

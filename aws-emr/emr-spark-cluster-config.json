@@ -1,0 +1,14 @@
+[
+  {
+     "Classification": "spark-env",
+     "Configurations": [
+       {
+         "Classification": "export",
+         "Properties": {
+            "PYSPARK_PYTHON": "/usr/bin/python3",
+            "PYTHONHASHSEED": "8675309"	
+          }
+       }
+    ]
+  }
+]
